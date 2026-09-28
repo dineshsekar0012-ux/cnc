@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CNC Predictive Maintenance - Machine Health Prediction System</title>
+  <meta name="description" content="AI-powered CNC milling predictive maintenance system. Predict machine operating condition, failure probability, health score, and failure modes using machine learning.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="brand-icon">
+          <i class="fa-solid fa-gear fa-spin-hover"></i>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">CNC Predictive Maintenance</h1>
+          <p class="brand-subtitle">Machine Health Prediction System</p>
+        </div>
+      </div>
+
+      <nav class="nav-links">
+        <a href="#home" class="nav-item active" id="nav-home"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="#about" class="nav-item" id="nav-about"><i class="fa-solid fa-circle-info"></i> About</a>
+        <a href="#history" class="nav-item" id="nav-history"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
+        <a href="#dataset" class="nav-item" id="nav-dataset"><i class="fa-solid fa-database"></i> Dataset</a>
+        <a href="#contact" class="nav-item" id="nav-contact"><i class="fa-solid fa-headset"></i> Contact</a>
+      </nav>
+
+      <div class="system-status-indicator">
+        <span class="pulse-dot"></span>
+        <span class="status-label">Model Online (99.1% Acc)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APPLICATION CONTENT -->
+  <main class="main-content" id="home">
+    <div class="dashboard-grid">
+
+      <!-- LEFT PANEL: MACHINE SPECIFICATIONS FORM -->
+      <section class="card input-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon-badge blue-badge">
+              <i class="fa-solid fa-sliders"></i>
+            </div>
+            <div>
+              <h2 class="card-title">Enter Machine Specifications</h2>
+              <p class="card-subtitle">Input the current machine parameters to predict its condition</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUICK PRESETS BAR -->
+        <div class="presets-section">
+          <span class="preset-label"><i class="fa-solid fa-bolt"></i> Quick Scenarios:</span>
+          <div class="preset-chips">
+            <button type="button" class="preset-chip active" data-preset="healthy" title="Standard optimal operating conditions">
+              <i class="fa-solid fa-circle-check text-success"></i> Healthy
+            </button>
+            <button type="button" class="preset-chip" data-preset="warning_wear" title="High tool wear approaching limits">
+              <i class="fa-solid fa-triangle-exclamation text-warning"></i> Tool Wear
+            </button>
+            <button type="button" class="preset-chip" data-preset="power_failure" title="Extreme RPM with low torque / stall risk">
+              <i class="fa-solid fa-plug-circle-bolt text-danger"></i> Power Failure
+            </button>
+            <button type="button" class="preset-chip" data-preset="overstrain" title="High torque with high tool wear">
+              <i class="fa-solid fa-weight-hanging text-danger"></i> Overstrain
+            </button>
+            <button type="button" class="preset-chip" data-preset="heat_dissipation" title="Narrow temperature gradient and low cooling RPM">
+              <i class="fa-solid fa-fire text-danger"></i> Heat Hazard
+            </button>
+            <button type="button" class="preset-chip" data-preset="random_sample" title="Sample a random machine from the 10,000 dataset">
+              <i class="fa-solid fa-shuffle"></i> Random Sample
+            </button>
+          </div>
+        </div>
+
+        <form id="prediction-form" class="specs-form">
+          <!-- Machine ID & Type Row -->
+          <div class="form-group">
+            <label for="machine-id" class="form-label">
+              <span>Machine ID</span>
+              <span class="type-badge-indicator" id="type-badge">Type: M (Medium)</span>
+            </label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-gear input-icon"></i>
+              <select id="machine-id" class="form-select" aria-label="Machine ID">
+                <option value="CNC-001" data-type="M">CNC-001 (M - Medium Quality)</option>
+                <option value="CNC-002" data-type="L">CNC-002 (L - Low Quality)</option>
+                <option value="CNC-003" data-type="L">CNC-003 (L - Low Quality)</option>
+                <option value="CNC-004" data-type="L">CNC-004 (L - Low Quality)</option>
+                <option value="CNC-005" data-type="H">CNC-005 (H - High Quality)</option>
+                <option value="CNC-006" data-type="M">CNC-006 (M - Medium Quality)</option>
+                <option value="custom" data-type="M">Custom Machine Entry...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Machine Type Selection (Hidden or Secondary) -->
+          <div class="form-group" id="custom-type-group" style="display: none;">
+            <label for="machine-type" class="form-label">Machine Type Quality Variant</label>
+            <div class="type-selector-buttons">
+              <button type="button" class="type-btn" data-type="L">L (Low - 50%)</button>
+              <button type="button" class="type-btn active" data-type="M">M (Medium - 30%)</button>
+              <button type="button" class="type-btn" data-type="H">H (High - 20%)</button>
+            </div>
+            <input type="hidden" id="machine-type-val" value="M">
+          </div>
+
+          <!-- Air Temperature (K) -->
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="air-temp" class="form-label">Air Temperature (K)</label>
+              <span class="param-secondary-val" id="air-temp-c">(24.95 °C)</span>
+            </div>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-temperature-low input-icon"></i>
+              <input type="number" id="air-temp" class="form-input" step="0.1" min="250" max="350" value="298.1" required>
+            </div>
+            <input type="range" id="air-temp-range" class="range-slider" min="280" max="320" step="0.1" value="298.1">
+          </div>
+
+          <!-- Process Temperature (K) -->
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="proc-temp" class="form-label">Process Temperature (K)</label>
+              <span class="param-secondary-val" id="proc-temp-c">(35.45 °C)</span>
+            </div>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-temperature-high input-icon"></i>
+              <input type="number" id="proc-temp" class="form-input" step="0.1" min="270" max="360" value="308.6" required>
+            </div>
+            <input type="range" id="proc-temp-range" class="range-slider" min="290" max="330" step="0.1" value="308.6">
+          </div>
+
+          <!-- Rotational Speed (rpm) -->
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="rot-speed" class="form-label">Rotational Speed (rpm)</label>
+              <span class="param-secondary-val">Normal: 1200 - 2600 rpm</span>
+            </div>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-gauge-high input-icon"></i>
+              <input type="number" id="rot-speed" class="form-input" step="1" min="500" max="6000" value="4200" required>
+            </div>
+            <input type="range" id="rot-speed-range" class="range-slider" min="1000" max="5000" step="10" value="4200">
+          </div>
+
+          <!-- Torque (Nm) -->
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="torque" class="form-label">Torque (Nm)</label>
+              <span class="param-secondary-val">Nominal: 10 - 65 Nm</span>
+            </div>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-wrench input-icon"></i>
+              <input type="number" id="torque" class="form-input" step="0.1" min="1" max="150" value="45.2" required>
+            </div>
+            <input type="range" id="torque-range" class="range-slider" min="5" max="90" step="0.5" value="45.2">
+          </div>
+
+          <!-- Tool Wear (min) -->
+          <div class="form-group">
+            <div class="label-with-val">
+              <label for="tool-wear" class="form-label">Tool Wear (min)</label>
+              <span class="param-secondary-val">Limit: 200 min</span>
+            </div>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-screwdriver input-icon"></i>
+              <input type="number" id="tool-wear" class="form-input" step="1" min="0" max="350" value="120" required>
+            </div>
+            <input type="range" id="tool-wear-range" class="range-slider" min="0" max="260" step="1" value="120">
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="predict-btn" class="btn btn-primary btn-block">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Predict Machine Status</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- RIGHT PANEL: PREDICTION RESULTS -->
+      <section class="card result-card" id="results-panel">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon-badge blue-badge">
+              <i class="fa-solid fa-microchip"></i>
+            </div>
+            <div>
+              <h2 class="card-title">Prediction Result</h2>
+              <p class="card-subtitle">Machine condition based on input parameters</p>
+            </div>
+          </div>
+          <div class="timestamp-box">
+            <i class="fa-regular fa-clock"></i>
+            <span id="current-timestamp">16 May 2025, 10:42 AM</span>
+          </div>
+        </div>
+
+        <!-- MAIN HEALTH STATUS BANNER -->
+        <div class="status-banner status-healthy" id="main-status-banner">
+          <div class="status-icon-circle" id="main-status-icon">
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <div class="status-content">
+            <h3 class="status-headline" id="main-status-title">MACHINE HEALTHY</h3>
+            <p class="status-subtext" id="main-status-desc">The machine is operating under normal conditions.</p>
+          </div>
+        </div>
+
+        <!-- METRIC CARDS ROW -->
+        <div class="metrics-row">
+          <!-- Failure Probability -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-icon-small blue-text"><i class="fa-solid fa-chart-column"></i></span>
+              <span class="metric-title">Failure Probability</span>
+            </div>
+            <div class="metric-value-container">
+              <span class="metric-value" id="val-failure-prob">12.4%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill fill-green" id="bar-failure-prob" style="width: 12.4%;"></div>
+            </div>
+          </div>
+
+          <!-- Health Score -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-icon-small red-text"><i class="fa-solid fa-heart-pulse"></i></span>
+              <span class="metric-title">Health Score</span>
+            </div>
+            <div class="metric-value-container">
+              <span class="metric-value" id="val-health-score">87 / 100</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill fill-green" id="bar-health-score" style="width: 87%;"></div>
+            </div>
+          </div>
+
+          <!-- Risk Level -->
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-icon-small blue-text"><i class="fa-solid fa-shield-halved"></i></span>
+              <span class="metric-title">Risk Level</span>
+            </div>
+            <div class="metric-value-container centered">
+              <span class="risk-pill pill-low" id="val-risk-level">LOW RISK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAILURE MODES BREAKDOWN (Appears when Warning or Risk) -->
+        <div class="failure-modes-alert" id="failure-modes-section" style="display: none;">
+          <div class="modes-header">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <strong>Diagnosed Failure Modes & Mechanics:</strong>
+          </div>
+          <div class="modes-list" id="failure-modes-list">
+            <!-- Dynamic Failure Modes -->
+          </div>
+        </div>
+
+        <!-- PARAMETER STATUS SECTION -->
+        <div class="parameter-status-block">
+          <div class="section-subtitle-bar">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Parameter Status</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="status-table" id="param-status-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Value</th>
+                  <th>Status</th>
+                  <th>Nominal Range</th>
+                </tr>
+              </thead>
+              <tbody id="param-table-body">
+                <tr>
+                  <td><i class="fa-solid fa-temperature-low table-icon"></i> Air Temperature</td>
+                  <td class="bold-val" id="row-air-val">298.1 K</td>
+                  <td><span class="status-dot dot-normal"></span> <span class="status-text-normal" id="row-air-stat">Normal</span></td>
+                  <td class="range-muted">(260 - 310 K)</td>
+                </tr>
+                <tr>
+                  <td><i class="fa-solid fa-temperature-high table-icon"></i> Process Temperature</td>
+                  <td class="bold-val" id="row-proc-val">308.6 K</td>
+                  <td><span class="status-dot dot-normal"></span> <span class="status-text-normal" id="row-proc-stat">Normal</span></td>
+                  <td class="range-muted">(280 - 320 K)</td>
+                </tr>
+                <tr>
+                  <td><i class="fa-solid fa-gauge-high table-icon"></i> Rotational Speed</td>
+                  <td class="bold-val" id="row-speed-val">4200 rpm</td>
+                  <td><span class="status-dot dot-normal"></span> <span class="status-text-normal" id="row-speed-stat">Normal</span></td>
+                  <td class="range-muted">(1000 - 6000 rpm)</td>
+                </tr>
+                <tr>
+                  <td><i class="fa-solid fa-wrench table-icon"></i> Torque</td>
+                  <td class="bold-val" id="row-torque-val">45.2 Nm</td>
+                  <td><span class="status-dot dot-normal"></span> <span class="status-text-normal" id="row-torque-stat">Normal</span></td>
+                  <td class="range-muted">(10 - 100 Nm)</td>
+                </tr>
+                <tr>
+                  <td><i class="fa-solid fa-screwdriver table-icon"></i> Tool Wear</td>
+                  <td class="bold-val" id="row-wear-val">120 min</td>
+                  <td><span class="status-dot dot-warning"></span> <span class="status-text-warning" id="row-wear-stat">Moderate</span></td>
+                  <td class="range-muted">(0 - 200 min)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Secondary Physical Telemetry Metrics -->
+          <div class="physics-telemetry-row">
+            <div class="telemetry-item" title="Process Temp - Air Temp (Dissipation factor)">
+              <span class="telemetry-label">Temp Gradient (ΔT):</span>
+              <span class="telemetry-val" id="telem-dt">10.5 K</span>
+            </div>
+            <div class="telemetry-item" title="Mechanical Spindle Power Output">
+              <span class="telemetry-label">Spindle Power:</span>
+              <span class="telemetry-val" id="telem-power">19.88 kW</span>
+            </div>
+            <div class="telemetry-item" title="Tool Wear * Torque load product">
+              <span class="telemetry-label">Overstrain Load:</span>
+              <span class="telemetry-val" id="telem-overstrain">5,424 min·Nm</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECOMMENDATION BOX -->
+        <div class="recommendation-card" id="recommendation-box">
+          <div class="rec-icon">
+            <i class="fa-solid fa-lightbulb"></i>
+          </div>
+          <div class="rec-content">
+            <h4 class="rec-title">Recommendation</h4>
+            <p class="rec-text" id="recommendation-text">
+              Machine is operating under normal conditions. Continue regular monitoring and maintenance.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- BOTTOM PANEL: PREDICTION HISTORY -->
+    <section class="card history-card" id="history-section">
+      <div class="card-header history-header">
+        <div class="card-title-group">
+          <div class="card-icon-badge blue-badge">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+          <div>
+            <h2 class="card-title">Prediction History</h2>
+            <p class="card-subtitle">Recent predictions and operating diagnostics logged</p>
+          </div>
+        </div>
+        <div class="history-actions">
+          <button type="button" class="btn btn-outline btn-sm" id="btn-export-csv">
+            <i class="fa-solid fa-file-csv"></i> Export CSV
+          </button>
+          <button type="button" class="btn btn-outline btn-sm btn-danger-hover" id="btn-clear-history">
+            <i class="fa-solid fa-trash-can"></i> Clear History
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="history-table" id="history-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Machine ID</th>
+              <th>Air Temp (K)</th>
+              <th>Process Temp (K)</th>
+              <th>RPM</th>
+              <th>Torque (Nm)</th>
+              <th>Tool Wear (min)</th>
+              <th>Result</th>
+              <th>Risk</th>
+              <th>Time</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body">
+            <!-- Will be populated dynamically by app.js with mock historical entries and user runs -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- ABOUT & TECHNOLOGY MODAL -->
+  <div class="modal-backdrop" id="modal-about" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <i class="fa-solid fa-circle-info modal-icon"></i>
+          <h3>About CNC Predictive Maintenance System</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modal-about">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h4>Overview</h4>
+        <p>This system uses Machine Learning (Random Forest & Decision Ensemble) trained on 10,000 real-world CNC milling machine operational records (AI4I 2020 Dataset) to predict machine health, failure probability, and diagnose 5 specific mechanical failure modes.</p>
+        
+        <div class="failure-mode-info-grid">
+          <div class="info-card">
+            <div class="info-card-title"><i class="fa-solid fa-screwdriver text-primary"></i> Tool Wear Failure (TWF)</div>
+            <p>Occurs when tool wear reaches critical threshold (200-240 min), causing surface roughness and catastrophic tool shank breakage.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title"><i class="fa-solid fa-fire text-danger"></i> Heat Dissipation Failure (HDF)</div>
+            <p>Triggered when temperature difference (ΔT = Process Temp - Air Temp) is less than 8.6 K and rotational speed is below 1380 rpm.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title"><i class="fa-solid fa-plug-circle-bolt text-warning"></i> Power Failure (PWF)</div>
+            <p>Calculated from mechanical power (P = Torque × Speed × 2π/60). Failure occurs when power is under 3500 W (spindle stall) or over 9000 W (motor overload).</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title"><i class="fa-solid fa-weight-hanging text-danger"></i> Overstrain Failure (OSF)</div>
+            <p>Caused by product of Tool Wear (min) × Torque (Nm) exceeding the load limit of the machine frame (11,000 to 13,000 min·Nm depending on quality type).</p>
+          </div>
+        </div>
+
+        <h4>Model Performance Metrics</h4>
+        <div class="model-metrics-grid">
+          <div class="metric-pill"><strong>99.1%</strong> Accuracy</div>
+          <div class="metric-pill"><strong>96.3%</strong> Precision</div>
+          <div class="metric-pill"><strong>76.5%</strong> Recall</div>
+          <div class="metric-pill"><strong>0.973</strong> ROC-AUC</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATASET EXPLORER MODAL -->
+  <div class="modal-backdrop" id="modal-dataset" style="display: none;">
+    <div class="modal-dialog modal-large">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <i class="fa-solid fa-database modal-icon"></i>
+          <h3>Dataset Explorer (10,000 Records)</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modal-dataset">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="dataset-controls">
+          <input type="text" id="dataset-search" class="form-input" placeholder="Search by Machine ID, Product ID, Failure Mode...">
+          <select id="dataset-filter-status" class="form-select" style="max-width: 200px;">
+            <option value="all">All Conditions</option>
+            <option value="healthy">Healthy Only</option>
+            <option value="failure risk">Failure Risk Only</option>
+          </select>
+        </div>
+
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="dataset-table" id="dataset-browser-table">
+            <thead>
+              <tr>
+                <th>UDI</th>
+                <th>Product ID</th>
+                <th>Type</th>
+                <th>Air Temp (K)</th>
+                <th>Process Temp (K)</th>
+                <th>RPM</th>
+                <th>Torque</th>
+                <th>Wear</th>
+                <th>Failure</th>
+                <th>Failure Mode</th>
+                <th>Test</th>
+              </tr>
+            </thead>
+            <tbody id="dataset-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div class="dataset-pagination">
+          <button type="button" class="btn btn-sm btn-outline" id="prev-page"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+          <span id="page-indicator">Page 1 of 500</span>
+          <button type="button" class="btn btn-sm btn-outline" id="next-page">Next <i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTACT & SUPPORT MODAL -->
+  <div class="modal-backdrop" id="modal-contact" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <i class="fa-solid fa-headset modal-icon"></i>
+          <h3>Maintenance Technician Support</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modal-contact">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Need urgent technical assistance or automated work order dispatch for a flagged CNC machine?</p>
+        <form id="contact-form" class="specs-form" onsubmit="event.preventDefault(); alert('Maintenance work order ticket dispatched successfully to on-duty CNC shop technician!'); document.getElementById('modal-contact').style.display='none';">
+          <div class="form-group">
+            <label class="form-label">Technician Station</label>
+            <input type="text" class="form-input" value="Shop Floor Station 4 - Milling Bay B" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Machine Flagged</label>
+            <input type="text" class="form-input" id="contact-machine-ref" value="CNC-001 (Medium Quality CNC)" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Urgency Level</label>
+            <select class="form-select">
+              <option>Standard Priority (Routine Maintenance)</option>
+              <option selected>High Priority (Warning Threshold Exceeded)</option>
+              <option>Critical Emergency (Immediate Spindle Halt)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Work Order Notes</label>
+            <textarea class="form-input" rows="3" placeholder="Enter notes for technician inspection (e.g. check collet torque, replace carbide insert)..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fa-solid fa-paper-plane"></i> Dispatch Work Order
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <strong>CNC Predictive Maintenance</strong>
+        <span>Using Machine Learning for a Smarter Tomorrow</span>
+      </div>
+      <div class="footer-right">
+        <span>&copy; 2025 CNC Predictive Maintenance. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- SCRIPTS -->
+  <script src="ml_engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
